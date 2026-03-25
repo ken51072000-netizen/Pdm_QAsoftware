@@ -7,19 +7,6 @@ interface Props {
   defaultOpen?: boolean
 }
 
-function SimilarityBadge({ score }: { score: number }) {
-  const pct = Math.round(score * 100)
-  const color =
-    pct >= 80 ? 'bg-green-100 text-green-700' :
-    pct >= 50 ? 'bg-yellow-100 text-yellow-700' :
-    'bg-red-100 text-red-700'
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${color}`}>
-      相似度 {pct}%
-    </span>
-  )
-}
-
 export default function SectionDiff({ comparison, defaultOpen = false }: Props) {
   const [open, setOpen] = useState(defaultOpen)
 
@@ -29,10 +16,7 @@ export default function SectionDiff({ comparison, defaultOpen = false }: Props) 
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
-          <span className="font-semibold text-gray-800">{comparison.field_label_zh}</span>
-          <SimilarityBadge score={comparison.similarity_score} />
-        </div>
+        <span className="font-semibold text-gray-800">{comparison.field_label_zh}</span>
         <span className="text-gray-400 text-xs">{open ? '▲ 收起' : '▼ 展開'}</span>
       </button>
 

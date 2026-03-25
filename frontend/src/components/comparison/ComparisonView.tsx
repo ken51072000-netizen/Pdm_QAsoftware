@@ -8,22 +8,8 @@ interface Props {
   onReset: () => void
 }
 
-function OverallScore({ score }: { score: number }) {
-  const pct = Math.round(score * 100)
-  const color =
-    pct >= 80 ? 'text-green-600' :
-    pct >= 50 ? 'text-yellow-600' :
-    'text-red-600'
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-gray-600 text-sm">整體相似度</span>
-      <span className={`text-2xl font-bold ${color}`}>{pct}%</span>
-    </div>
-  )
-}
-
 export default function ComparisonView({ result, onReset }: Props) {
-  const { consultant_report, software_report, field_comparisons, overall_similarity } = result
+  const { consultant_report, software_report, field_comparisons } = result
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -42,15 +28,12 @@ export default function ComparisonView({ result, onReset }: Props) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <OverallScore score={overall_similarity} />
-          <button
-            onClick={onReset}
-            className="text-sm text-blue-600 hover:text-blue-800 underline"
-          >
-            重新上傳
-          </button>
-        </div>
+        <button
+          onClick={onReset}
+          className="text-sm text-blue-600 hover:text-blue-800 underline"
+        >
+          重新上傳
+        </button>
       </div>
 
       {/* Extraction warnings */}
@@ -62,14 +45,6 @@ export default function ComparisonView({ result, onReset }: Props) {
       {software_report.extraction_warning && (
         <div className="mb-4">
           <WarningBanner message={`軟體系統：${software_report.extraction_warning}`} />
-        </div>
-      )}
-
-      {/* Confidence info */}
-      {(consultant_report.extraction_confidence > 0 || software_report.extraction_confidence > 0) && (
-        <div className="mb-4 flex gap-4 text-xs text-gray-400">
-          <span>人工顧問擷取信心度：{Math.round(consultant_report.extraction_confidence * 100)}%</span>
-          <span>軟體系統擷取信心度：{Math.round(software_report.extraction_confidence * 100)}%</span>
         </div>
       )}
 

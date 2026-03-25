@@ -13,7 +13,6 @@ export interface ExtractedReport {
   diagnostic_description: string
   improvement_suggestions: string
   page_count: number
-  extraction_confidence: number
   extraction_warning: string
 }
 
@@ -23,7 +22,6 @@ export interface FieldComparison {
   consultant_text: string
   software_text: string
   diff_segments: DiffSegment[]
-  similarity_score: number
 }
 
 export interface ComparisonResult {
@@ -31,7 +29,6 @@ export interface ComparisonResult {
   consultant_report: ExtractedReport
   software_report: ExtractedReport
   field_comparisons: FieldComparison[]
-  overall_similarity: number
   created_at: string
 }
 

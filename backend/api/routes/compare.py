@@ -51,7 +51,6 @@ async def run_comparison(
         equipment_threshold=consultant_parsed["equipment_threshold"],
         diagnostic_description=consultant_parsed["diagnostic_description"],
         improvement_suggestions=consultant_parsed["improvement_suggestions"],
-        extraction_confidence=consultant_parsed["confidence"],
         extraction_warning=_warning(consultant_parsed),
     )
 
@@ -62,19 +61,14 @@ async def run_comparison(
         equipment_threshold=software_parsed["equipment_threshold"],
         diagnostic_description=software_parsed["diagnostic_description"],
         improvement_suggestions=software_parsed["improvement_suggestions"],
-        extraction_confidence=software_parsed["confidence"],
         extraction_warning=_warning(software_parsed),
     )
-
-    # Compute diffs
-    field_comparisons, overall_similarity = compare_reports(consultant_parsed, software_parsed)
 
     result = ComparisonResult(
         id=str(uuid.uuid4()),
         consultant_report=consultant_report,
         software_report=software_report,
-        field_comparisons=field_comparisons,
-        overall_similarity=overall_similarity,
+        field_comparisons=compare_reports(consultant_parsed, software_parsed),
         created_at=datetime.now(timezone.utc),
     )
 

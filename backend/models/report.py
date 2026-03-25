@@ -11,8 +11,7 @@ class ExtractedReport(BaseModel):
     diagnostic_description: str = ""  # 診斷說明
     improvement_suggestions: str = ""  # 改善建議
     page_count: int = 0
-    extraction_confidence: float = 0.0
-    extraction_warning: str = ""    # non-empty if AI extraction failed
+    extraction_warning: str = ""
 
 
 class DiffSegment(BaseModel):
@@ -26,7 +25,6 @@ class FieldComparison(BaseModel):
     consultant_text: str
     software_text: str
     diff_segments: list[DiffSegment]
-    similarity_score: float
 
 
 class ComparisonResult(BaseModel):
@@ -34,7 +32,6 @@ class ComparisonResult(BaseModel):
     consultant_report: ExtractedReport
     software_report: ExtractedReport
     field_comparisons: list[FieldComparison]
-    overall_similarity: float
     created_at: datetime
 
 

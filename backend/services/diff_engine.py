@@ -28,53 +28,36 @@ def _tokenize_chinese(text: str) -> list[str]:
     return [p for p in parts if p]
 
 
-def _compute_diff(a: str, b: str) -> tuple[list[DiffSegment], float]:
-    """
-    Compute character-level diff between a and b.
-    Returns (segments, similarity_score).
-    """
+def _compute_diff(a: str, b: str) -> list[DiffSegment]:
+    """Compute character-level diff between a and b."""
     dmp = diff_match_patch()
 
     if not a and not b:
-        return [], 1.0
+        return []
 
     diffs = dmp.diff_main(a, b)
     dmp.diff_cleanupSemantic(diffs)
 
-    segments = [
+    return [
         DiffSegment(type=_OP_MAP[op], text=text)
         for op, text in diffs
-        if text  # skip empty segments
+        if text
     ]
 
-    # Similarity: 1 - (edit distance / max length)
-    edit_dist = dmp.diff_levenshtein(diffs)
-    max_len = max(len(a), len(b), 1)
-    similarity = max(0.0, 1.0 - edit_dist / max_len)
 
-    return segments, round(similarity, 4)
-
-
-def compare_reports(consultant: dict, software: dict) -> tuple[list[FieldComparison], float]:
+def compare_reports(consultant: dict, software: dict) -> list[FieldComparison]:
     """
     Compare three fields between consultant and software parsed reports.
 
     Args:
         consultant: dict with keys equipment_threshold, diagnostic_description, improvement_suggestions
         software:   same structure
-
-    Returns:
-        (field_comparisons, overall_similarity)
     """
     comparisons: list[FieldComparison] = []
-    similarity_scores: list[float] = []
 
     for field_name, label_zh in FIELDS:
         a = consultant.get(field_name, "")
         b = software.get(field_name, "")
-
-        segments, score = _compute_diff(a, b)
-        similarity_scores.append(score)
 
         comparisons.append(
             FieldComparison(
@@ -82,10 +65,8 @@ def compare_reports(consultant: dict, software: dict) -> tuple[list[FieldCompari
                 field_label_zh=label_zh,
                 consultant_text=a,
                 software_text=b,
-                diff_segments=segments,
-                similarity_score=score,
+                diff_segments=_compute_diff(a, b),
             )
         )
 
-    overall = round(sum(similarity_scores) / len(similarity_scores), 4) if similarity_scores else 0.0
-    return comparisons, overall
+    return comparisons
