@@ -2,6 +2,7 @@
 from __future__ import annotations
 import re
 
+
 def _spaced(s: str) -> str:
     """Allow optional spaces between each character (handles OCR spacing)."""
     return r"\s*".join(re.escape(c) for c in s)
@@ -11,12 +12,13 @@ def _spaced(s: str) -> str:
 _FIELD_PATTERNS = {
     "equipment_threshold": [
         _spaced("設備閾值"), _spaced("振動嚴重等級"), _spaced("健康度"), _spaced("閾值"),
+        _spaced("振動等級"),
     ],
     "diagnostic_description": [
         _spaced("診斷說明"), _spaced("診斷結果"), _spaced("診斷"),
     ],
     "improvement_suggestions": [
-        _spaced("改善建議"), _spaced("建議措施"), _spaced("改善措施"), _spaced("建議"),
+        _spaced("改善建議"), _spaced("維修建議"), _spaced("建議措施"), _spaced("改善措施"), _spaced("建議"),
     ],
 }
 
@@ -79,6 +81,24 @@ def parse_report(raw_text: str, anthropic_client=None) -> dict:
         content = _extract_section(raw_text, patterns)
         results[field_name] = content
         if content:
+            found_count += 1
+
+    # Fallback for diagnostic_description:
+    # If the header was missing (OCR corruption), use content before the first
+    # known section header (typically the summary/diagnostic page).
+    if not results["diagnostic_description"]:
+        other_re = "|".join(_ALL_HEADERS)
+        first_section = re.search(rf"(?:{other_re})[：:\s]", raw_text)
+        if first_section and first_section.start() > 50:
+            results["diagnostic_description"] = raw_text[:first_section.start()].strip()
+            found_count += 1
+
+    # Fallback for equipment_threshold:
+    # If no header found, look for ISO vibration grade pattern like "B（尚可）可長期運轉".
+    if not results["equipment_threshold"]:
+        grade_match = re.search(r'[A-D]\s*[_（(]\s*[^）)\n]{1,20}[）)][^\n]{0,60}', raw_text)
+        if grade_match:
+            results["equipment_threshold"] = grade_match.group(0).strip()
             found_count += 1
 
     # Confidence: proportion of fields successfully extracted
