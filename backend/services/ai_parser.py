@@ -2,16 +2,21 @@
 from __future__ import annotations
 import re
 
+def _spaced(s: str) -> str:
+    """Allow optional spaces between each character (handles OCR spacing)."""
+    return r"\s*".join(re.escape(c) for c in s)
+
+
 # Section header patterns mapped to field names
 _FIELD_PATTERNS = {
     "equipment_threshold": [
-        r"設備閾值", r"健康度", r"閾值",
+        _spaced("設備閾值"), _spaced("振動嚴重等級"), _spaced("健康度"), _spaced("閾值"),
     ],
     "diagnostic_description": [
-        r"診斷說明", r"診斷結果", r"診斷",
+        _spaced("診斷說明"), _spaced("診斷結果"), _spaced("診斷"),
     ],
     "improvement_suggestions": [
-        r"改善建議", r"建議措施", r"改善措施", r"建議",
+        _spaced("改善建議"), _spaced("建議措施"), _spaced("改善措施"), _spaced("建議"),
     ],
 }
 
