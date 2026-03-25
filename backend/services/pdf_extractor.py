@@ -1,11 +1,11 @@
-"""PDF text extraction using pdfplumber."""
+"""PDF text extraction using pdfplumber with OCR fallback."""
 from __future__ import annotations
 import re
 import unicodedata
 
 
 class ScannedPDFError(Exception):
-    """Raised when a PDF contains no extractable text (image-only)."""
+    """Raised when a PDF contains no extractable text and OCR also failed."""
 
 
 def _normalize(text: str) -> str:
@@ -73,12 +73,60 @@ def extract_text(pdf_bytes: bytes) -> dict:
     raw_text = _normalize("\n".join(pages_text)).strip()
 
     if not raw_text or len(raw_text) < 20:
-        raise ScannedPDFError(
-            "無法從此 PDF 擷取文字。此 PDF 可能為掃描影像檔，目前尚不支援 OCR 處理。"
-        )
+        # Fallback to OCR for scanned/image PDFs
+        ocr_text = _ocr_pdf(pdf_bytes)
+        return {
+            "raw_text": ocr_text,
+            "page_count": page_count,
+            "truncated": truncated,
+            "ocr": True,
+        }
 
     return {
         "raw_text": raw_text,
         "page_count": page_count,
         "truncated": truncated,
+        "ocr": False,
     }
+
+
+def _ocr_pdf(pdf_bytes: bytes) -> str:
+    """Render PDF pages as images and run Tesseract OCR."""
+    try:
+        import fitz  # PyMuPDF
+    except ImportError:
+        raise ScannedPDFError(
+            "OCR 需要 PyMuPDF：請執行 pip install pymupdf"
+        )
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError:
+        raise ScannedPDFError(
+            "OCR 需要 pytesseract 與 Pillow：請執行 pip install pytesseract pillow"
+        )
+
+    try:
+        import io
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        pages_text: list[str] = []
+
+        for i, page in enumerate(doc):
+            # Render at 300 DPI (72 DPI default × 300/72 ≈ 4.17)
+            mat = fitz.Matrix(300 / 72, 300 / 72)
+            pix = page.get_pixmap(matrix=mat)
+            img = Image.open(io.BytesIO(pix.tobytes("png")))
+
+            # Traditional Chinese + English
+            text = pytesseract.image_to_string(img, lang="chi_tra+eng")
+            pages_text.append(f"\n--- PAGE {i + 1} ---\n{text}")
+
+        ocr_text = _normalize("\n".join(pages_text)).strip()
+        if not ocr_text or len(ocr_text) < 20:
+            raise ScannedPDFError("OCR 未能識別出任何文字，請確認 PDF 影像品質。")
+        return ocr_text
+
+    except ScannedPDFError:
+        raise
+    except Exception as e:
+        raise ScannedPDFError(f"OCR 處理失敗：{e}")
