@@ -41,7 +41,7 @@ async def run_comparison(
     # Build warnings if extraction confidence is low
     def _warning(parsed: dict) -> str:
         if parsed["confidence"] < 0.3:
-            return "AI 結構化擷取失敗或信心度不足，以下欄位可能為空白。請參考下方原始文字。"
+            return "未能從 PDF 中找到標準欄位標題，以下欄位可能為空白。請參考下方原始文字。"
         return ""
 
     consultant_report = ExtractedReport(
