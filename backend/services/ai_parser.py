@@ -85,12 +85,11 @@ def parse_report(raw_text: str, anthropic_client=None) -> dict:
 
     # Fallback for diagnostic_description:
     # If the header was missing (OCR corruption), use content before the first
-    # known section header (typically the summary/diagnostic page).
+    # Chinese numbered section marker like "二、" (e.g. 二、維修建議).
     if not results["diagnostic_description"]:
-        other_re = "|".join(_ALL_HEADERS)
-        first_section = re.search(rf"(?:{other_re})[：:\s]", raw_text)
-        if first_section and first_section.start() > 50:
-            results["diagnostic_description"] = raw_text[:first_section.start()].strip()
+        section_marker = re.search(r'[二三四五六七八九十]\s*[、,，]', raw_text)
+        if section_marker and section_marker.start() > 50:
+            results["diagnostic_description"] = raw_text[:section_marker.start()].strip()
             found_count += 1
 
     # Fallback for equipment_threshold:
