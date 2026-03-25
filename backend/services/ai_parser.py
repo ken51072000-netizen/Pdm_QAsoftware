@@ -84,13 +84,16 @@ def parse_report(raw_text: str, anthropic_client=None) -> dict:
             found_count += 1
 
     # Fallback for diagnostic_description:
-    # If the header was missing (OCR corruption), use content before the first
-    # Chinese numbered section marker like "二、" (e.g. 二、維修建議).
+    # Extract content between the report date line and the vibration grade line.
     if not results["diagnostic_description"]:
-        section_marker = re.search(r'[二三四五六七八九十]\s*[、,，]', raw_text)
-        if section_marker and section_marker.start() > 50:
-            results["diagnostic_description"] = raw_text[:section_marker.start()].strip()
-            found_count += 1
+        date_match = re.search(r'\d{4}-\d{1,2}-\d{1,2}', raw_text)
+        grade_match = re.search(r'[A-D]\s*[_（(]\s*[^）)\n]{1,20}[）)][^\n]{0,60}', raw_text)
+        if date_match and grade_match and date_match.end() < grade_match.start():
+            line_end = raw_text.find('\n', date_match.end())
+            content = raw_text[line_end:grade_match.start()].strip()
+            if len(content) > 20:
+                results["diagnostic_description"] = content
+                found_count += 1
 
     # Fallback for equipment_threshold:
     # If no header found, look for ISO vibration grade pattern like "B（尚可）可長期運轉".
