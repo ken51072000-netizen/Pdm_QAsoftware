@@ -72,8 +72,8 @@ def extract_text(pdf_bytes: bytes) -> dict:
 
     raw_text = _normalize("\n".join(pages_text)).strip()
 
-    if not raw_text or len(raw_text) < 20:
-        # Fallback to OCR for scanned/image PDFs
+    if not raw_text or len(raw_text) < 20 or _missing_chinese(raw_text):
+        # Fallback to OCR: scanned PDF or font encoding issue (Chinese chars missing)
         ocr_text = _ocr_pdf(pdf_bytes)
         return {
             "raw_text": ocr_text,
@@ -88,6 +88,15 @@ def extract_text(pdf_bytes: bytes) -> dict:
         "truncated": truncated,
         "ocr": False,
     }
+
+
+def _missing_chinese(text: str) -> bool:
+    """Return True if the text has content but suspiciously few Chinese characters."""
+    non_ws = sum(1 for c in text if not c.isspace())
+    if non_ws < 50:
+        return False  # Too short to judge
+    chinese = sum(1 for c in text if "\u4e00" <= c <= "\u9fff")
+    return chinese / non_ws < 0.05  # Less than 5% Chinese → likely encoding failure
 
 
 def _ocr_pdf(pdf_bytes: bytes) -> str:
