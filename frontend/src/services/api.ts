@@ -41,3 +41,22 @@ export async function runComparison(sessionId: string): Promise<ComparisonResult
   })
   return handleResponse<ComparisonResult>(res)
 }
+
+export async function getApiKeyStatus(): Promise<{ configured: boolean; preview: string }> {
+  const res = await fetch(`${BASE}/settings/api-key`)
+  return handleResponse(res)
+}
+
+export async function saveApiKey(key: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${BASE}/settings/api-key`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key }),
+  })
+  return handleResponse(res)
+}
+
+export async function deleteApiKey(): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`${BASE}/settings/api-key`, { method: 'DELETE' })
+  return handleResponse(res)
+}

@@ -2,11 +2,15 @@
 from __future__ import annotations
 import os
 
+from dotenv import load_dotenv
+load_dotenv()  # Load .env from project root before anything else
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.api.routes import upload as upload_router
 from backend.api.routes import compare as compare_router
+from backend.api.routes import settings as settings_router
 
 app = FastAPI(
     title="設備頻譜分析報告比對系統",
@@ -27,6 +31,7 @@ app.add_middleware(
 
 app.include_router(upload_router.router, prefix="/api", tags=["upload"])
 app.include_router(compare_router.router, prefix="/api", tags=["compare"])
+app.include_router(settings_router.router, prefix="/api", tags=["settings"])
 
 
 @app.get("/api/health", tags=["health"])
